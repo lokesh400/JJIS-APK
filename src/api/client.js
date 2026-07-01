@@ -50,6 +50,16 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
+    // Check if the error is 401 Unauthorized (session expired or invalid)
+    if (error.response && error.response.status === 401) {
+      if (Platform.OS !== 'web') {
+        const { DeviceEventEmitter } = require('react-native');
+        DeviceEventEmitter.emit('AUTH_EXPIRED');
+      } else {
+        // Fallback for web if needed
+        window.dispatchEvent(new Event('AUTH_EXPIRED'));
+      }
+    }
     return Promise.reject(error);
   }
 );

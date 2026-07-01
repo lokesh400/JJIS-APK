@@ -8,6 +8,7 @@ import DownloadsScreen from '../screens/batches/DownloadsScreen';
 import AttachmentViewerScreen from '../screens/batches/AttachmentViewerScreen';
 import MyPurchasesScreen from '../screens/purchases/MyPurchasesScreen';
 import PurchaseReceiptDetailScreen from '../screens/purchases/PurchaseReceiptDetailScreen';
+import PurchasePreviewScreen from '../screens/purchases/PurchasePreviewScreen';
 
 const Stack = createNativeStackNavigator();
 
@@ -15,6 +16,7 @@ export default function BatchesStack() {
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="BatchesList" component={BatchesScreen} />
+      <Stack.Screen name="PurchasePreview" component={PurchasePreviewScreen} />
       <Stack.Screen name="Downloads" component={DownloadsScreen} />
       <Stack.Screen name="AttachmentViewer" component={AttachmentViewerScreen} />
       <Stack.Screen name="MyPurchases" component={MyPurchasesScreen} />

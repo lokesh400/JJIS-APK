@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import apiClient, { COOKIE_KEY } from '../api/client';
 
@@ -32,6 +33,16 @@ export function AuthProvider({ children }) {
       }
     };
     checkAuth();
+
+    // Listen for global 401 Unauthorized events from the API client interceptor
+    const authSubscription = DeviceEventEmitter.addListener('AUTH_EXPIRED', () => {
+      console.warn('Session expired, forcing logout.');
+      logout();
+    });
+
+    return () => {
+      authSubscription.remove();
+    };
   }, []);
 
   // Passport-local expects 'username' and 'password' as body fields.

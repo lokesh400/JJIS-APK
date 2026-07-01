@@ -86,11 +86,7 @@ export default function BatchesScreen({ navigation }) {
         style={styles.card}
         activeOpacity={0.85}
         onPress={() => {
-          if (isCourse) {
-            navigation.navigate('Study', { screen: 'StudyCourseDetail', params: { courseId: item._id, purchased: false } });
-          } else {
-            navigation.navigate('TestSeriesDetail', { item });
-          }
+          navigation.navigate('PurchasePreview', { item, type: isCourse ? 'course' : 'test-series' });
         }}
       >
         <View style={styles.badgeWrap}>
@@ -118,7 +114,7 @@ export default function BatchesScreen({ navigation }) {
               <Text style={styles.freeText}>FREE</Text>
             )}
             <View style={styles.exploreBtn}>
-              <Text style={styles.exploreBtnText}>Explore</Text>
+              <Text style={styles.exploreBtnText}>{item.price > 0 ? 'Purchase Now' : 'Explore'}</Text>
             </View>
           </View>
         </View>

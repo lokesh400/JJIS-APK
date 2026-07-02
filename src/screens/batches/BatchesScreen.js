@@ -36,7 +36,7 @@ export default function BatchesScreen({ navigation }) {
           apiClient.get('/test-series/my-purchase')
         ]);
 
-        const purchasedCourseIds = new Set((myCoursesRes.data || []).map(c => c._id));
+        const purchasedCourseIds = new Set((myCoursesRes.data || []).map(c => c.course?._id || c._id).filter(Boolean));
         const purchasedTestIds = new Set((myTestsRes.data || []).map(t => t._id));
 
         const unpurchasedCourses = (pubCoursesRes.data || [])

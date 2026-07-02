@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, ScrollView, Dimensions, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, Alert, ScrollView, Dimensions, ActivityIndicator, RefreshControl, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useAuth } from '../../auth/AuthContext';
@@ -16,8 +16,15 @@ export default function DashboardScreen({ navigation }) {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cohorts, setCohorts] = useState([]);
   const [selectedCohort, setSelectedCohort] = useState(null);
-  const [schedule, setSchedule] = useState({ live: [], upcoming: [], completed: [] });
+  const [schedule, setSchedule] = useState({ live: [], upcoming: [], completed: [], cancelled: [] });
   const [cohortsLoading, setCohortsLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await loadCohorts();
+    setRefreshing(false);
+  };
   const [scheduleLoading, setScheduleLoading] = useState(false);
 
   // Load cohorts on mount
@@ -60,10 +67,11 @@ export default function DashboardScreen({ navigation }) {
           live: data.live || [],
           upcoming: data.upcoming || [],
           completed: data.completed || [],
+          cancelled: data.cancelled || [],
         });
       } catch (e) {
         console.error('Failed to load schedule', e);
-        setSchedule({ live: [], upcoming: [], completed: [] });
+        setSchedule({ live: [], upcoming: [], completed: [], cancelled: [] });
       } finally {
         setScheduleLoading(false);
       }
@@ -77,12 +85,16 @@ export default function DashboardScreen({ navigation }) {
 
   const renderLectureCard = (lecture) => (
     <View key={lecture._id} style={styles.horizontalLectureCard}>
-      {lecture.status === 'live' && (
+      {lecture.status === 'live' ? (
         <View style={styles.livePill}>
           <View style={styles.liveDot} />
           <Text style={styles.livePillText}>LIVE NOW</Text>
         </View>
-      )}
+      ) : lecture.status === 'cancelled' ? (
+        <View style={[styles.livePill, { backgroundColor: '#F1F5F9' }]}>
+          <Text style={[styles.livePillText, { color: '#64748B' }]}>CANCELLED</Text>
+        </View>
+      ) : null}
       <Text style={styles.lectureTitle} numberOfLines={2}>{lecture.title}</Text>
       <Text style={styles.lectureSubtitle} numberOfLines={1}>{lecture.subject}</Text>
       {lecture.scheduledAt && (
@@ -94,29 +106,35 @@ export default function DashboardScreen({ navigation }) {
         </Text>
       )}
       <View style={{ flex: 1 }} />
-      <TouchableOpacity
-        style={[styles.joinBtn, lecture.status === 'live' && styles.joinBtnLive]}
-        onPress={() => {
-          navigation.navigate('Study', {
-            screen: 'StudyYoutubeVideoPlayer',
-            params: {
-              courseId: selectedCohort,
-              lectureId: lecture._id,
-              lectureTitle: lecture.title,
-              status: lecture.status || 'ended',
-            }
-          });
-        }}
-      >
-        <MaterialCommunityIcons
-          name={lecture.status === 'live' ? 'play-circle' : 'play-outline'}
-          size={16}
-          color="#fff"
-        />
-        <Text style={styles.joinBtnText}>
-          {lecture.status === 'live' ? 'Join Live' : 'Watch Recording'}
-        </Text>
-      </TouchableOpacity>
+      {lecture.status === 'cancelled' ? (
+        <View style={[styles.joinBtn, { backgroundColor: '#F8FAFC', borderWidth: 1, borderColor: '#E2E8F0' }]}>
+           <Text style={[styles.joinBtnText, { color: '#64748B' }]}>🚫 Class Cancelled</Text>
+        </View>
+      ) : (
+        <TouchableOpacity
+          style={[styles.joinBtn, lecture.status === 'live' && styles.joinBtnLive]}
+          onPress={() => {
+            navigation.navigate('Study', {
+              screen: 'StudyYoutubeVideoPlayer',
+              params: {
+                courseId: selectedCohort,
+                lectureId: lecture._id,
+                lectureTitle: lecture.title,
+                status: lecture.status || 'ended',
+              }
+            });
+          }}
+        >
+          <MaterialCommunityIcons
+            name={lecture.status === 'live' ? 'play-circle' : 'play-outline'}
+            size={16}
+            color="#fff"
+          />
+          <Text style={styles.joinBtnText}>
+            {lecture.status === 'live' ? 'Join Live' : 'Watch Recording'}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 
@@ -127,15 +145,13 @@ export default function DashboardScreen({ navigation }) {
         <View style={styles.bgBlobBottom} />
 
         <View style={styles.header}>
-          <View style={styles.brandWrap}>
-            <Image
-              source={require('../../../assets/icon.png')}
-              style={styles.brandLogo}
-              resizeMode="contain"
-            />
-            <View>
-              <Text style={styles.brandTitle}>Garud Classes</Text>
-            </View>
+          <Image
+            source={require('../../../assets/icon.png')}
+            style={styles.brandLogo}
+            resizeMode="contain"
+          />
+          <View style={styles.titleContainer} pointerEvents="none">
+            <Text style={styles.brandTitle}>Garud Classes</Text>
           </View>
 
           <TouchableOpacity style={styles.menuBtn} activeOpacity={0.85} onPress={() => setMenuOpen(true)}>
@@ -143,7 +159,11 @@ export default function DashboardScreen({ navigation }) {
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+        <ScrollView 
+          contentContainerStyle={styles.scrollContent} 
+          showsVerticalScrollIndicator={false}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        >
                     {/* Cohort Selector */}
           {cohortsLoading ? (
             <View style={styles.cohortLoadingWrap}>
@@ -238,6 +258,24 @@ export default function DashboardScreen({ navigation }) {
                       </ScrollView>
                     )}
                   </View>
+
+                  {/* CANCELLED CLASSES */}
+                  <View style={styles.horizontalSection}>
+                    <View style={styles.sectionHeaderRow}>
+                      <Text style={styles.sectionTitle}>Cancelled</Text>
+                      <View style={styles.badgeBox}><Text style={styles.badgeText}>{schedule.cancelled?.length || 0}</Text></View>
+                    </View>
+                    {(!schedule.cancelled || schedule.cancelled.length === 0) ? (
+                      <View style={styles.emptyHorizontalCard}>
+                         <MaterialCommunityIcons name="cancel" size={24} color="#94A3B8" />
+                         <Text style={styles.emptyHorizontalText}>No cancelled classes</Text>
+                      </View>
+                    ) : (
+                      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.horizontalScroll}>
+                        {schedule.cancelled.map(lecture => renderLectureCard(lecture))}
+                      </ScrollView>
+                    )}
+                  </View>
                 </>
               )}
             </>
@@ -254,10 +292,10 @@ export default function DashboardScreen({ navigation }) {
               onPress={() => navigation.navigate('Batches', { screen: 'BatchesList' })}
             >
               <View style={styles.actionIconWrap}>
-                <MaterialCommunityIcons name="book-open-page-variant" size={26} color="#1D4ED8" />
+                <MaterialCommunityIcons name="compass-outline" size={26} color="#1D4ED8" />
               </View>
-              <Text style={styles.actionTitle}>My Batches</Text>
-              <Text style={styles.actionHint}>Resume your classes</Text>
+              <Text style={styles.actionTitle}>Explore Store</Text>
+              <Text style={styles.actionHint}>Find new courses</Text>
               <View style={styles.actionFooter}>
                 <Text style={styles.actionFooterText}>Open</Text>
                 <MaterialCommunityIcons name="arrow-right" size={16} color="#1D4ED8" />
@@ -339,21 +377,21 @@ export default function DashboardScreen({ navigation }) {
           </View>
         </ScrollView>
 
-        {menuOpen && (
-          <>
-            <TouchableOpacity style={styles.menuOverlay} activeOpacity={1} onPress={() => setMenuOpen(false)} />
-            <View style={styles.menuDrawer}>
+        
+        <Modal visible={menuOpen} animationType="slide" transparent={true} onRequestClose={() => setMenuOpen(false)}>
+          <View style={styles.modalOverlay}>
+            <View style={styles.fullScreenDrawer}>
               <View style={styles.menuHeader}>
                 <Text style={styles.menuHeaderTitle}>Menu</Text>
                 <TouchableOpacity onPress={() => setMenuOpen(false)} style={styles.menuCloseBtn}>
-                  <Text style={styles.menuCloseText}>✕</Text>
+                  <MaterialCommunityIcons name="close" size={24} color="#64748B" />
                 </TouchableOpacity>
               </View>
 
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionTitle}>Account</Text>
                 <TouchableOpacity style={styles.menuActionBtn} onPress={() => { setMenuOpen(false); navigation.navigate('MyProfile'); }}>
-                  <MaterialCommunityIcons name="account-circle-outline" size={20} color="#1D4ED8" style={{marginRight: 10}} />
+                  <MaterialCommunityIcons name="account-circle-outline" size={24} color="#1D4ED8" style={{marginRight: 14}} />
                   <Text style={styles.menuActionText}>My Profile</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
@@ -363,7 +401,7 @@ export default function DashboardScreen({ navigation }) {
                     navigation.navigate('Batches', { screen: 'MyPurchases' });
                   }}
                 >
-                  <MaterialCommunityIcons name="cart-outline" size={20} color="#1D4ED8" style={{marginRight: 10}} />
+                  <MaterialCommunityIcons name="cart-outline" size={24} color="#1D4ED8" style={{marginRight: 14}} />
                   <Text style={styles.menuActionText}>My Purchases</Text>
                 </TouchableOpacity>
               </View>
@@ -371,27 +409,30 @@ export default function DashboardScreen({ navigation }) {
               <View style={styles.menuSection}>
                 <Text style={styles.menuSectionTitle}>Essentials</Text>
                 <TouchableOpacity style={styles.menuActionBtn} onPress={() => { setMenuOpen(false); navigation.navigate('HelpSupport'); }}>
-                  <MaterialCommunityIcons name="lifebuoy" size={20} color="#1D4ED8" style={{marginRight: 10}} />
+                  <MaterialCommunityIcons name="lifebuoy" size={24} color="#1D4ED8" style={{marginRight: 14}} />
                   <Text style={styles.menuActionText}>Help & Support</Text>
                 </TouchableOpacity>
                 <TouchableOpacity style={styles.menuActionBtn} onPress={() => { setMenuOpen(false); navigation.navigate('Settings'); }}>
-                  <MaterialCommunityIcons name="cog-outline" size={20} color="#1D4ED8" style={{marginRight: 10}} />
+                  <MaterialCommunityIcons name="cog-outline" size={24} color="#1D4ED8" style={{marginRight: 14}} />
                   <Text style={styles.menuActionText}>Settings</Text>
                 </TouchableOpacity>
               </View>
 
+              <View style={{ flex: 1 }} />
+              
               <TouchableOpacity
-                style={styles.logoutBtn}
+                style={styles.logoutBtnFull}
                 onPress={async () => {
                   setMenuOpen(false);
                   await logout();
                 }}
               >
-                <Text style={styles.logoutText}>Logout</Text>
+                <MaterialCommunityIcons name="logout" size={20} color="#DC2626" style={{marginRight: 8}} />
+                <Text style={styles.logoutTextFull}>Logout</Text>
               </TouchableOpacity>
             </View>
-          </>
-        )}
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );
@@ -595,15 +636,17 @@ const styles = StyleSheet.create({
     borderBottomColor: '#E2E8F0',
     backgroundColor: 'rgba(248,250,252,0.92)',
   },
-  brandWrap: {
-    flexDirection: 'row',
+  titleContainer: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
     alignItems: 'center',
+    zIndex: 1,
   },
   brandLogo: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    marginRight: 10,
+    width: 36,
+    height: 36,
+    borderRadius: 8,
   },
   brandTitle: {
     color: '#0F172A',
@@ -843,89 +886,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontWeight: '800',
   },
-  menuOverlay: {
-    ...StyleSheet.absoluteFillObject,
-    backgroundColor: 'rgba(0,0,0,0.28)',
-    zIndex: 10,
-  },
-  menuDrawer: {
-    position: 'absolute',
-    top: 0,
-    right: 0,
-    bottom: 0,
-    width: '76%',
-    maxWidth: 330,
-    backgroundColor: '#FFFFFF',
-    borderLeftWidth: 1,
-    borderLeftColor: '#E2E8F0',
-    zIndex: 11,
-    paddingBottom: 14,
-  },
-  menuHeader: {
-    paddingHorizontal: 14,
-    paddingTop: 16,
-    paddingBottom: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  menuHeaderTitle: {
-    color: '#0F172A',
-    fontSize: 17,
-    fontWeight: '800',
-  },
-  menuCloseBtn: {
-    width: 30,
-    height: 30,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    backgroundColor: '#FFFFFF',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuCloseText: { color: '#334155', fontSize: 13, fontWeight: '800' },
-  menuSection: {
-    paddingHorizontal: 14,
-    paddingTop: 14,
-  },
-  menuSectionTitle: {
-    color: '#64748B',
-    fontSize: 12,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-    letterSpacing: 0.4,
-    marginBottom: 8,
-  },
-  menuActionBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    paddingVertical: 11,
-    marginBottom: 8,
-    backgroundColor: '#F8FAFC',
-  },
-  menuActionText: {
-    color: '#0F172A',
-    fontSize: 14,
-    fontWeight: '700',
-  },
-  logoutBtn: {
-    marginTop: 'auto',
-    marginHorizontal: 14,
-    borderRadius: 10,
-    backgroundColor: '#1D4ED8',
-    paddingVertical: 12,
-    alignItems: 'center',
-  },
-  logoutText: {
-    color: '#FFFFFF',
-    fontSize: 14,
-    fontWeight: '800',
-  },
+  modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'flex-end' },
+  fullScreenDrawer: { backgroundColor: '#F8FAFC', width: '100%', height: '90%', borderTopLeftRadius: 32, borderTopRightRadius: 32, padding: 24, paddingBottom: 40, elevation: 20, shadowColor: '#000', shadowOffset: { width: 0, height: -10 }, shadowOpacity: 0.1, shadowRadius: 15 },
+  menuHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 24, borderBottomWidth: 1, borderColor: '#E2E8F0', marginBottom: 24 },
+  menuHeaderTitle: { fontSize: 24, fontWeight: '900', color: '#0F172A' },
+  menuCloseBtn: { padding: 8, backgroundColor: '#E2E8F0', borderRadius: 20 },
+  menuSection: { marginBottom: 32 },
+  menuSectionTitle: { fontSize: 13, fontWeight: '800', color: '#64748B', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 },
+  menuActionBtn: { flexDirection: 'row', alignItems: 'center', paddingVertical: 16, borderBottomWidth: 1, borderColor: '#F1F5F9' },
+  menuActionText: { fontSize: 17, color: '#1E293B', fontWeight: '600' },
+  logoutBtnFull: { flexDirection: 'row', backgroundColor: '#FEE2E2', paddingVertical: 18, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
+  logoutTextFull: { color: '#DC2626', fontSize: 16, fontWeight: '800' }
 });

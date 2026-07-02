@@ -11,7 +11,6 @@ const API_BASE_URL = 'https://dashboard.garudclasses.com/api';
 const apiClient = axios.create({
   baseURL: API_BASE_URL,
   timeout: 10000,
-  // Browser requires credentials mode for cookie-based auth.
   withCredentials: true,
 });
 
@@ -101,9 +100,20 @@ export const getCourse = async (courseId) => {
     allLectures.push(...course.lectures);
   }
 
+  const today = new Date();
   return {
     live: allLectures.filter(l => l.status === 'live'),
     upcoming: allLectures.filter(l => l.status === 'scheduled'),
-    completed: allLectures.filter(l => l.status === 'ended' || !l.status || l.status === 'completed'),
+    cancelled: allLectures.filter(l => l.status === 'cancelled'),
+    completed: allLectures.filter(l => {
+      if (l.status === 'ended' || !l.status || l.status === 'completed') {
+        if (!l.scheduledAt) return false;
+        const lecDate = new Date(l.scheduledAt);
+        return lecDate.getFullYear() === today.getFullYear() &&
+               lecDate.getMonth() === today.getMonth() &&
+               lecDate.getDate() === today.getDate();
+      }
+      return false;
+    }),
   };
 };

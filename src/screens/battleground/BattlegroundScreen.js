@@ -1,8 +1,9 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ActivityIndicator, ScrollView, Alert, Image, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import AppHeader from '../../components/AppHeader';
 import apiClient from '../../api/client';
 
@@ -14,6 +15,7 @@ const streakBadges = [
 
 export default function BattlegroundScreen({ navigation }) {
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [battlegrounds, setBattlegrounds] = useState([]);
   const [streak, setStreak] = useState({ currentStreak: 0, bestStreak: 0, totalAttempts: 0, totalCorrect: 0 });
   const [submittedSubjects, setSubmittedSubjects] = useState([]);
@@ -52,8 +54,9 @@ export default function BattlegroundScreen({ navigation }) {
     }, [])
   );
 
-  const fetchTodayQuiz = async () => {
-    setLoading(true);
+  const fetchTodayQuiz = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const res = await apiClient.get('/battlegrounds/today');
       const list = res.data?.battlegrounds || res.data?.quizzes || (res.data?.quiz ? [res.data.quiz] : []);
@@ -67,8 +70,14 @@ export default function BattlegroundScreen({ navigation }) {
       Alert.alert('Error', err?.response?.data?.message || 'Failed to load battleground quiz.');
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
+
+  
+  const onRefresh = useCallback(() => {
+    fetchTodayQuiz(true);
+  }, []);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={['top']}>
@@ -96,11 +105,15 @@ export default function BattlegroundScreen({ navigation }) {
         }
       />
 
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent} 
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
         <View style={styles.bgOrbOne} />
         <View style={styles.bgOrbTwo} />
 
-        <View style={styles.heroCard}>
+        <LinearGradient colors={['#4F46E5', '#312E81']} start={{x:0, y:0}} end={{x:1, y:1}} style={styles.heroCard}>
           <View style={styles.heroTagWrap}>
             <Text style={styles.heroTag}>Daily Combat Arena</Text>
           </View>
@@ -113,7 +126,7 @@ export default function BattlegroundScreen({ navigation }) {
             <Text style={styles.heroMetaDot}>•</Text>
             <Text style={styles.heroMetaItem}>Date: {dateKey || '-'}</Text>
           </View>
-        </View>
+        </LinearGradient>
 
         <View style={styles.statPanel}>
           <Text style={styles.sectionTitle}>Streak Performance</Text>
@@ -201,9 +214,7 @@ export default function BattlegroundScreen({ navigation }) {
           )}
         </View>
 
-        <TouchableOpacity style={styles.refreshBtn} onPress={fetchTodayQuiz}>
-          <Text style={styles.refreshBtnText}>Refresh Today's Quiz</Text>
-        </TouchableOpacity>
+        
       </ScrollView>
     </SafeAreaView>
   );

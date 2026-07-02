@@ -25,7 +25,10 @@ export default function PurchasePreviewScreen({ route, navigation }) {
           itemType: type === 'course' ? 'Course' : 'TestSeries',
           itemId: item._id
         });
-        if (res.data?.success) {
+        if (res.data?.alreadyPurchased) {
+          Alert.alert("Already Enrolled", "You have already enrolled in this!");
+          navigateToDetail();
+        } else if (res.data?.success) {
           Alert.alert("Success", "You have successfully enrolled for free!");
           navigateToDetail();
         }
@@ -36,6 +39,12 @@ export default function PurchasePreviewScreen({ route, navigation }) {
           itemId: item._id
         });
         
+        if (orderRes.data?.alreadyPurchased) {
+          Alert.alert("Already Enrolled", "You have already purchased this!");
+          navigateToDetail();
+          return;
+        }
+
         const { orderId, amount, currency, razorpayKeyId } = orderRes.data;
 
         const options = {
@@ -89,17 +98,15 @@ export default function PurchasePreviewScreen({ route, navigation }) {
   const navigateToDetail = () => {
     setLoading(false);
     if (type === 'course') {
-      navigation.replace('Study', { screen: 'StudyCourseDetail', params: { courseId: item._id, purchased: true } });
+      navigation.navigate('Study', { screen: 'StudyCourseDetail', params: { courseId: item._id, purchased: true } });
     } else {
       navigation.replace('TestSeriesDetail', { item });
     }
   };
 
   return (
-    <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
-      <AppHeader title="Preview" navigation={navigation} showBack={true} />
-      
-      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+    <View style={styles.container}>
+      <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} bounces={false}>
         <View style={styles.imageContainer}>
           {item.image ? (
             <Image source={{ uri: item.image }} style={styles.bannerImage} resizeMode="cover" />
@@ -109,11 +116,19 @@ export default function PurchasePreviewScreen({ route, navigation }) {
               <Text style={styles.placeholderText}>No Image</Text>
             </View>
           )}
-          {/* Gradient overlay for smooth transition */}
           <LinearGradient
-            colors={['transparent', 'rgba(15,23,42,0.8)']}
+            colors={['transparent', 'rgba(15,23,42,0.95)']}
             style={styles.gradientOverlay}
           />
+          {/* Custom Back Button */}
+          <SafeAreaView style={styles.backBtnSafeArea} edges={['top']}>
+            <TouchableOpacity 
+              style={styles.backBtn}
+              onPress={() => navigation.goBack()}
+            >
+              <MaterialCommunityIcons name="arrow-left" size={24} color="#FFF" />
+            </TouchableOpacity>
+          </SafeAreaView>
         </View>
 
         <View style={styles.detailsContainer}>
@@ -199,21 +214,21 @@ export default function PurchasePreviewScreen({ route, navigation }) {
           <MaterialCommunityIcons name="shield-check" size={14} color="#64748B" /> Secure Checkout
         </Text>
       </View>
-    </SafeAreaView>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: '#F8FAFC' },
+  container: { flex: 1, backgroundColor: '#F8FAFC' },
   scrollContent: { paddingBottom: 130 },
   imageContainer: {
     position: 'relative',
     width: '100%',
-    height: 280,
+    height: 340,
   },
   bannerImage: {
     width: '100%',
-    height: 280,
+    height: 340,
     backgroundColor: '#E2E8F0',
   },
   gradientOverlay: {
@@ -221,7 +236,21 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    height: 120,
+    height: 180,
+  },
+  backBtnSafeArea: {
+    position: 'absolute',
+    top: 10,
+    left: 16,
+  },
+  backBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backdropFilter: 'blur(10px)',
   },
   placeholderImage: {
     alignItems: 'center',
@@ -235,7 +264,7 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     padding: 24,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: '#F8FAFC',
     borderTopLeftRadius: 32,
     borderTopRightRadius: 32,
     marginTop: -40,

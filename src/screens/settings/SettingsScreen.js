@@ -1,5 +1,5 @@
-import React, { useMemo, useState } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Image } from 'react-native';
+import React, { useMemo, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, Alert, Image, ScrollView, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import AppHeader from '../../components/AppHeader';
 
@@ -15,6 +15,20 @@ export default function SettingsScreen({ navigation }) {
     if (step === 2) return 'Step 2: Validate OTP';
     return 'Step 3: Set New Password';
   }, [step]);
+
+  const [refreshing, setRefreshing] = useState(false);
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setStep(1);
+      setIdentifier('');
+      setOtpInput('');
+      setGeneratedOtp('');
+      setNewPassword('');
+      setRefreshing(false);
+    }, 1000);
+  }, []);
 
   const sendOtp = () => {
     const trimmed = identifier.trim();
@@ -71,7 +85,11 @@ export default function SettingsScreen({ navigation }) {
         right={<Image source={require('../../../assets/icon.png')} style={styles.headerLogo} />}
       />
 
-      <View style={styles.root}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+      >
         <View style={styles.card}>
           <Text style={styles.title}>Change Password</Text>
           <Text style={styles.stepTitle}>{stepTitle}</Text>
@@ -138,7 +156,7 @@ export default function SettingsScreen({ navigation }) {
             </>
           )}
         </View>
-      </View>
+      </ScrollView>
     </SafeAreaView>
   );
 }
@@ -146,13 +164,18 @@ export default function SettingsScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#F8FAFC' },
   headerLogo: { width: 32, height: 32, borderRadius: 8 },
-  root: { flex: 1, padding: 16 },
+  scrollContent: { padding: 16, paddingBottom: 40 },
   card: {
-    borderRadius: 16,
+    borderRadius: 20,
     borderWidth: 1,
-    borderColor: '#DBEAFE',
+    borderColor: '#E2E8F0',
     backgroundColor: '#FFFFFF',
-    padding: 16,
+    padding: 24,
+    shadowColor: '#1D4ED8',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.05,
+    shadowRadius: 12,
+    elevation: 3,
   },
   title: { fontSize: 21, fontWeight: '800', color: '#1E3A8A' },
   stepTitle: { marginTop: 4, marginBottom: 14, fontSize: 13, color: '#64748B', fontWeight: '700' },

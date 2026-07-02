@@ -10,6 +10,8 @@ import {
   RefreshControl,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import AppHeader from '../../components/AppHeader';
 import { useAuth } from '../../auth/AuthContext';
 import apiClient from '../../api/client';
@@ -59,9 +61,10 @@ export default function MyTestsScreen({ navigation }) {
       {item.image ? (
         <Image source={{ uri: item.image }} style={styles.cardImage} resizeMode="cover" />
       ) : (
-        <View style={[styles.cardImage, styles.cardImagePlaceholder]}>
-          <Text style={styles.cardImagePlaceholderText}>No Image</Text>
-        </View>
+        <LinearGradient colors={['#94A3B8', '#64748B']} style={[styles.cardImage, styles.cardImagePlaceholder]}>
+          <MaterialCommunityIcons name="file-document-edit-outline" size={32} color="#FFF" />
+          <Text style={styles.cardImagePlaceholderText}>No Cover</Text>
+        </LinearGradient>
       )}
 
       <View style={styles.cardBody}>
@@ -77,7 +80,10 @@ export default function MyTestsScreen({ navigation }) {
           onPress={() => navigation.navigate('TestSeriesDetail', { item })}
           activeOpacity={0.85}
         >
-          <Text style={styles.studyButtonText}>Continue Learning</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={styles.studyButtonText}>Continue Learning</Text>
+            <MaterialCommunityIcons name="arrow-right" size={16} color="#FFF" style={{ marginLeft: 6 }} />
+          </View>
         </TouchableOpacity>
       </View>
     </View>
@@ -128,11 +134,11 @@ export default function MyTestsScreen({ navigation }) {
         right={<Image source={require('../../../assets/icon.png')} style={styles.headerLogo} />}
       />
       <View style={styles.root}>
-        <View style={styles.summaryCard}>
+        <LinearGradient colors={['#1E3A8A', '#3B82F6']} start={{x:0, y:0}} end={{x:1, y:1}} style={styles.summaryCard}>
           <Text style={styles.summaryLabel}>YOUR STUDY TRACKS</Text>
           <Text style={styles.summaryValue}>{totalBatches}</Text>
           <Text style={styles.summarySubText}>Test Series available to continue</Text>
-        </View>
+        </LinearGradient>
 
         <FlatList
           data={batches}
@@ -162,48 +168,34 @@ const styles = StyleSheet.create({
   center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 24 },
   summaryCard: {
     marginHorizontal: 16,
-    marginTop: 12,
-    marginBottom: 4,
-    borderRadius: 16,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 14,
-    paddingVertical: 14,
+    marginTop: 16,
+    marginBottom: 8,
+    borderRadius: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 20,
+    shadowColor: '#1E3A8A',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
   },
-  summaryLabel: {
-    fontSize: 11,
-    color: '#1D4ED8',
-    fontWeight: '800',
-    letterSpacing: 0.4,
-    textTransform: 'uppercase',
-  },
-  summaryValue: {
-    marginTop: 4,
-    fontSize: 28,
-    color: '#1E3A8A',
-    fontWeight: '900',
-  },
-  summarySubText: {
-    marginTop: 2,
-    fontSize: 12,
-    color: '#334155',
-    fontWeight: '700',
-  },
+  summaryLabel: { fontSize: 12, color: 'rgba(255,255,255,0.7)', fontWeight: '800', letterSpacing: 1, textTransform: 'uppercase' },
+  summaryValue: { marginTop: 4, fontSize: 32, color: '#FFFFFF', fontWeight: '900' },
+  summarySubText: { marginTop: 4, fontSize: 14, color: 'rgba(255,255,255,0.9)', fontWeight: '600' },
   listContent: { paddingHorizontal: 16, paddingTop: 10, paddingBottom: 18 },
 
   card: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 18,
-    marginBottom: 16,
+    borderRadius: 20,
+    marginBottom: 20,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#E2E8F0',
-    elevation: 5,
-    shadowColor: '#0F172A',
-    shadowOffset: { width: 0, height: 7 },
-    shadowOpacity: 0.10,
-    shadowRadius: 12,
+    shadowColor: '#1D4ED8',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.08,
+    shadowRadius: 16,
+    elevation: 4,
   },
   cardImage: { width: '100%', height: 170 },
   cardImagePlaceholder: {
@@ -211,7 +203,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  cardImagePlaceholderText: { color: '#94A3B8', fontSize: 13, fontWeight: '700' },
+  cardImagePlaceholderText: { color: '#FFFFFF', fontSize: 13, fontWeight: '700', marginTop: 8 },
   cardBody: { padding: 14 },
   batchName: { fontSize: 17, fontWeight: '800', color: '#0F172A', marginBottom: 6 },
   batchDescription: { fontSize: 13, color: '#64748B', lineHeight: 19, marginBottom: 12 },

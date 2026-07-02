@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform, Modal } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, ActivityIndicator, KeyboardAvoidingView, Platform, Modal, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { fetchMyHelpRequests, createHelpRequest } from '../../api/help';
 
 export default function HelpSupportScreen({ navigation }) {
   const [message, setMessage] = useState('');
   const [helpRequests, setHelpRequests] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState(null);
   const [ticketModalVisible, setTicketModalVisible] = useState(false);
@@ -30,8 +32,9 @@ export default function HelpSupportScreen({ navigation }) {
     };
   };
 
-  const loadHelpRequests = async () => {
-    setLoading(true);
+  const loadHelpRequests = async (isRefresh = false) => {
+    if (isRefresh) setRefreshing(true);
+    else setLoading(true);
     try {
       const data = await fetchMyHelpRequests();
       setHelpRequests(data);
@@ -40,6 +43,7 @@ export default function HelpSupportScreen({ navigation }) {
       setError('Failed to load help requests');
     }
     setLoading(false);
+    setRefreshing(false);
   };
 
   useEffect(() => {
@@ -60,16 +64,24 @@ export default function HelpSupportScreen({ navigation }) {
     setSubmitting(false);
   };
 
+  
+  const onRefresh = () => {
+    loadHelpRequests(true);
+  };
+
   return (
     <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
       <View style={styles.root}>
-        <View style={styles.header}>
-          <TouchableOpacity style={styles.backBtn} onPress={() => navigation && navigation.goBack && navigation.goBack()}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color="#1D4ED8" />
-          </TouchableOpacity>
-          <Text style={styles.headerTitle}>Help & Support</Text>
-          <View style={styles.backBtnPlaceholder} />
-        </View>
+        
+        <LinearGradient colors={['#1E3A8A', '#3B82F6']} style={styles.headerGradient}>
+          <View style={styles.header}>
+            <TouchableOpacity style={styles.backBtn} onPress={() => navigation && navigation.goBack && navigation.goBack()}>
+              <MaterialCommunityIcons name="arrow-left" size={24} color="#FFF" />
+            </TouchableOpacity>
+            <Text style={[styles.headerTitle, { color: '#FFF' }]}>Help & Support</Text>
+            <View style={styles.backBtnPlaceholder} />
+          </View>
+        </LinearGradient>
 
         <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={styles.actionsWrap}>
@@ -96,6 +108,7 @@ export default function HelpSupportScreen({ navigation }) {
             ) : (
               <FlatList
                 data={helpRequests}
+                refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
                 keyExtractor={item => item._id}
                 contentContainerStyle={{ paddingBottom: 20 }}
                 renderItem={({ item }) => {
@@ -238,22 +251,8 @@ export default function HelpSupportScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: '#FFFFFF' },
   root: { flex: 1, backgroundColor: '#FFFFFF' },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
-    backgroundColor: '#FFFFFF',
-    elevation: 2,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.06,
-    shadowRadius: 2,
-  },
+  headerGradient: { paddingBottom: 20, borderBottomLeftRadius: 24, borderBottomRightRadius: 24, marginBottom: 10 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingTop: 20 },
   headerTitle: {
     color: '#0F172A',
     fontSize: 18,
@@ -265,7 +264,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: '#F1F5F9',
+    backgroundColor: 'rgba(255,255,255,0.2)',
   },
   backBtnPlaceholder: {
     width: 36,

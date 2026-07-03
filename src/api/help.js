@@ -7,5 +7,5 @@ export const fetchMyHelpRequests = async () => {
 
 export const createHelpRequest = async (message) => {
   const res = await apiClient.post('/help', { message });
-  return res.data;
+  return res.data
 };

@@ -6,13 +6,13 @@ import AppHeader from '../../components/AppHeader';
 const PRIZE_MILESTONES = [
   {
     days: 50,
-    prize: 'Garud Classes Bottle',
+    prize: 'Jeevan Jyoti International School Bottle',
     icon: '🧴',
     note: 'Hydrate while you grind every day.',
   },
   {
     days: 100,
-    prize: 'Garud Classes T-Shirt',
+    prize: 'Jeevan Jyoti International School T-Shirt',
     icon: '👕',
     note: 'Wear your streak with pride.',
   },
@@ -24,7 +24,7 @@ const PRIZE_MILESTONES = [
   },
   {
     days: 365,
-    prize: 'Garud Classes Jacket',
+    prize: 'Jeevan Jyoti International School Jacket',
     icon: '🧥',
     note: 'Legendary yearly streak unlock.',
   },

@@ -53,7 +53,7 @@ export default function PurchasePreviewScreen({ route, navigation }) {
           currency,
           key: razorpayKeyId,
           amount,
-          name: 'Garud Classes',
+          name: 'Jeevan Jyoti International School',
           order_id: orderId,
           prefill: {
             email: user?.email || '',

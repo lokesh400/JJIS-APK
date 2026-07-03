@@ -60,7 +60,7 @@ export default function LoginScreen({ navigation, route }) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
-          <Text style={styles.appName}>Garud Classes</Text>
+          <Text style={styles.appName}>Jeevan Jyoti International School</Text>
           <Text style={styles.subtitle}>Login to your account</Text>
 
           {justRegistered && (

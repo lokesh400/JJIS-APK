@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Garud Classes",
-    "slug": "garud-classes",
+    "name": "Jeevan Jyoti International School",
+    "slug": "jeevan-jyoti-international",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -20,8 +20,7 @@
         "foregroundImage": "./assets/icon.png",
         "backgroundImage": "./assets/icon.png",
         "monochromeImage": "./assets/icon.png"
-      },
-      "package": "com.lokesh400.garudclasses"
+      }
     },
     "web": {
       "favicon": "./assets/icon.png"
@@ -29,11 +28,6 @@
     "plugins": [
       "expo-video"
     ],
-    "extra": {
-      "eas": {
-        "projectId": "2aee4bf0-1dfd-425a-b6c0-e9dbc0ba0c7d"
-      }
-    },
     "newArchEnabled": false
   }
 }

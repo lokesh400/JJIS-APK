@@ -6,7 +6,7 @@ const COOKIE_KEY = 'sid';
 
 // const API_BASE_URL = 'http://192.168.31.30:5000/api';
 
-const API_BASE_URL = 'https://dashboard.garudclasses.com/api';
+const API_BASE_URL = 'https://dashboard.jjishodal.com/api';
 
 const apiClient = axios.create({
   baseURL: API_BASE_URL,

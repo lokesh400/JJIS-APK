@@ -151,7 +151,7 @@ export default function DashboardScreen({ navigation }) {
             resizeMode="contain"
           />
           <View style={styles.titleContainer} pointerEvents="none">
-            <Text style={styles.brandTitle}>Garud Classes</Text>
+            <Text style={styles.brandTitle}>Jeevan Jyoti International School</Text>
           </View>
 
           <TouchableOpacity style={styles.menuBtn} activeOpacity={0.85} onPress={() => setMenuOpen(true)}>

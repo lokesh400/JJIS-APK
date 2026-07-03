@@ -76,7 +76,7 @@ export default function SignupScreen({ navigation }) {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.card}>
-          <Text style={styles.appName}>Garud Classes</Text>
+          <Text style={styles.appName}>Jeevan Jyoti International School</Text>
           <Text style={styles.subtitle}>Create your account</Text>
 
           {!!error && <Text style={styles.errorText}>{error}</Text>}
